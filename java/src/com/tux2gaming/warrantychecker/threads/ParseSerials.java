@@ -1,4 +1,4 @@
-package com.tux2gaming.bitmain.threads;
+package com.tux2gaming.warrantychecker.threads;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -29,11 +29,11 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.threeten.extra.YearWeek;
 
 import com.google.gson.Gson;
-import com.tux2gaming.bitmain.CanaanWarrantyStuff;
-import com.tux2gaming.bitmain.MinerType;
-import com.tux2gaming.bitmain.WarrantyDetails;
-import com.tux2gaming.bitmain.WarrantyStuff;
-import com.tux2gaming.bitmain.WhatsMinerWarrantyStuff;
+import com.tux2gaming.warrantychecker.CanaanWarrantyStuff;
+import com.tux2gaming.warrantychecker.MinerType;
+import com.tux2gaming.warrantychecker.WarrantyDetails;
+import com.tux2gaming.warrantychecker.WarrantyStuff;
+import com.tux2gaming.warrantychecker.WhatsMinerWarrantyStuff;
 
 public class ParseSerials extends SwingWorker<String, String> {
 
