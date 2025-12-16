@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<form action="/upload" method="post" enctype="multipart/form-data">
+    <div class="form-group">
+        <label for="file">Select Excel File (.xlsx):</label>
+        <input type="file" name="file" id="file" accept=".xlsx" required>
+    </div>
+
+    <div class="form-group">
+        <label for="miner_type">Select Miner Type:</label>
+        <select name="miner_type" id="miner_type">
+            <option value="AUTO">Auto Detect</option>
+            <option value="BITMAIN">Bitmain (Antminer)</option>
+            <option value="WHATSMINER">Whatsminer</option>
+            <option value="CANAAN">Canaan (Avalon)</option>
+            <option value="ALPHAMINER">Alpha Miner</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="output_filename">Output Filename / Path (Optional):</label>
+        <div style="display: flex; gap: 10px;">
+            <input type="text" name="output_filename" id="output_filename"
+                placeholder="e.g. results.xlsx or click Browse">
+            <button type="button" id="browse-btn" style="width: auto; background-color: #7f8c8d;">Browse...</button>
+        </div>
+        <small style="color: #666;">Leave blank to use default name</small>
+    </div>
+
+    <button type="submit">Start Warranty Check</button>
+
+    <script>
+        document.getElementById('browse-btn').addEventListener('click', function () {
+            const btn = this;
+            btn.innerText = "Opening...";
+            btn.disabled = true;
+
+            fetch('/browse-save')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.path) {
+                        document.getElementById('output_filename').value = data.path;
+                    }
+                    btn.innerText = "Browse...";
+                    btn.disabled = false;
+                })
+                .catch(err => {
+                    console.error(err);
+                    btn.innerText = "Error";
+                    setTimeout(() => {
+                        btn.innerText = "Browse...";
+                        btn.disabled = false;
+                    }, 2000);
+                });
+        });
+    </script>
+</form>
+{% endblock %}
