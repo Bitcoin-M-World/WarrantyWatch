@@ -1,0 +1,198 @@
+WarrantyWatch Python Port - Project Understanding & Time Estimate
+Project Understanding
+What WarrantyWatch Does
+WarrantyWatch is a cryptocurrency mining hardware warranty checker application designed for mining farm operators and hosting companies. It solves the problem of determining warranty status for large inventories of mining hardware across multiple manufacturers.
+Core Functionality
+Input Processing
+Reads Excel files (.xlsx) containing miner serial numbers
+Auto-detects serial number column (by pattern matching or header text)
+Supports resume capability (can continue from where it left off)
+Warranty Lookup
+Queries manufacturer APIs/endpoints to retrieve warranty expiration dates
+Supports 4 manufacturers with different approaches:
+Bitmain (Antminer): REST API (GET) - returns JSON
+Whatsminer: REST API (GET) - returns JSON
+Canaan (Avalon): POST form endpoint - returns JSON (requires custom parsing)
+Alpha Miner: No API - calculates from serial number pattern (year/week encoded + 6 months)
+Output Generation
+Creates new Excel file with original data preserved
+Appends warranty expiration date column
+In "Auto" mode, also appends detected miner type column
+User Interface
+Java Swing GUI with:
+File picker for input Excel file
+File picker for output Excel file
+Dropdown to select miner type (Antminer, Whatsminer, Canaan, Alpha Miner, Auto)
+Progress bar with status messages
+Start/Cancel button
+Technical Details
+API Endpoints
+Manufacturer
+Method
+Endpoint
+Response Format
+Special Notes
+Bitmain
+GET
+https://shop-repair.bitmain.com/api/warranty/getWarranty?serialNumber={serial}
+JSON
+Requires specific headers (User-Agent, referer, etc.)
+Whatsminer
+GET
+https://www.whatsminer.com/renren-fast/app/RepairWorkOrder/warranty?str={serial}&lang=en_US
+JSON
+Requires specific headers
+Canaan
+POST
+https://www.canaan.io/?do_action=action.supports_v2_sn_product_info
+JSON
+Form-encoded body: &list[0][SN]={serial}&list[0][Symptom]=&list[0][Remark]=
+Alpha Miner
+N/A
+Calculated from serial
+N/A
+Pattern: [A-Z0-9]{6}[A-Z]{2,5}([2-3][0-9])([0-5][0-9])[0-9]{7,11}
+
+Rate Limiting Handling
+Detects HTTP 429 (Too Many Requests)
+Reads Retry-After header if available
+Implements exponential backoff with waits (4 seconds for Bitmain, 500ms for others)
+Retries until successful response
+Serial Number Detection
+Pattern matching: [A-Z0-9]{17,33} for standard serials
+Header text search: looks for "serial" in column headers
+Alpha Miner specific pattern for calculation
+Excel Processing
+Uses Apache POI (Java) for reading/writing .xlsx files
+Preserves all original columns and cell styles
+Appends warranty data to new columns
+Supports resuming by comparing input/output serial numbers
+Python Port Architecture
+Proposed Stack
+Backend: Python 3.13+ with FastAPI
+Frontend: Jinja2 templates (server-side rendering)
+Excel Handling: openpyxl library
+HTTP Requests: requests library
+Date Calculations: isoweek library (for Alpha Miner)
+Web Server: Uvicorn (ASGI server)
+Project Structure
+warrantywatch-python/
+├── app/
+│   ├── __init__.py
+│   ├── main.py                 # FastAPI app & routes
+│   ├── models.py               # Data models (enums, dataclasses)
+│   ├── api_clients.py          # Manufacturer API clients
+│   ├── excel_handler.py        # Excel read/write logic
+│   ├── serial_parser.py        # Serial number detection & parsing
+│   └── templates/
+│       ├── base.html           # Base Jinja template
+│       ├── index.html          # Main upload form
+│       └── results.html        # Progress/results page
+├── static/
+│   └── style.css              # Minimal CSS
+├── uploads/                    # Temporary file storage
+├── requirements.txt
+├── README.md
+
+
+Key Components Breakdown
+1. Data Models (models.py)
+MinerType enum (BITMAIN, WHATSMINER, CANAAN, ALPHAMINER, AUTO)
+WarrantyDetails dataclass
+Response models for each manufacturer API
+2. API Clients (api_clients.py)
+BitmainClient - GET request with headers
+WhatsminerClient - GET request with headers
+CanaanClient - POST form-encoded request
+AlphaMinerCalculator - Serial pattern parsing + date calculation
+Base class with rate limiting logic
+3. Excel Handler (excel_handler.py)
+read_serial_numbers() - Detect serial column, extract data
+write_warranty_results() - Append warranty data, preserve styles
+check_resume_point() - Compare input/output for resume capability
+4. Serial Parser (serial_parser.py)
+Pattern matching for serial detection
+Header text search
+Serial validation per manufacturer
+5. Web Interface (main.py + templates)
+Upload form (file input, miner type dropdown)
+Background job processing (using FastAPI BackgroundTasks or Celery)
+Progress tracking (via WebSocket or polling)
+Results download page
+Time Estimate Breakdown
+Phase 1: Core Backend Logic (15-20 hours)
+Task
+Notes
+Set up project structure & dependencies
+Virtual env, requirements.txt, basic FastAPI setup
+Data models (enums, dataclasses)
+Straightforward port from Java classes
+Bitmain API client
+GET request, JSON parsing, error handling, rate limiting
+Whatsminer API client
+Similar to Bitmain, different response structure
+Canaan API client
+POST form-encoded, custom JSON parsing (more complex)
+Alpha Miner calculator
+Regex pattern matching, ISO week calculations
+Serial number parser
+Pattern matching, header detection logic
+Excel handler (read)
+Column detection, serial extraction, resume logic
+Excel handler (write)
+Preserve styles, append columns, formatting
+
+
+Phase 2: Web Interface (10 hours)
+Task
+Notes
+FastAPI routes setup
+Upload endpoint, file handling, form processing
+Jinja templates (base + index)
+Upload form, file picker UI, miner type dropdown
+Background job processing
+FastAPI BackgroundTasks or async processing
+Progress tracking mechanism
+WebSocket or polling endpoint for progress updates
+Results page template
+Display results, download link
+Minimal CSS styling
+Basic responsive design
+File upload/download handling
+Secure file storage, cleanup
+
+
+Phase 3: Testing & Refinement (8 hours)
+Task
+Notes
+Unit tests for API clients
+Mock HTTP responses, test rate limiting
+Unit tests for Excel handler
+Test serial detection, resume logic
+Integration testing
+End-to-end workflow with real/sample data
+Error handling improvements
+Better error messages, edge cases
+Rate limiting refinement
+Tune delays, retry logic
+Code cleanup & documentation
+Docstrings, README updates
+
+
+Phase 4: Polish & Deployment Prep (2 hours)
+Task
+Notes
+UI/UX improvements
+Better error messages, loading states
+Security hardening
+File validation, size limits, sanitization
+Deployment configuration
+Dockerfile, environment variables
+Final testing
+Cross-browser, different Excel formats
+Documentation
+User guide, API docs
+
+
+Total Time Estimate
+Conservative Estimate: 35-40 hours
